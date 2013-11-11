@@ -1,0 +1,57 @@
+
+class astar:
+	def __init__(self, start, end, levelTiles, levelSize):
+		self.current = None
+		self.openList = []
+		self.closedList = []
+		self.path = []
+		self.openList.append(start)
+		
+		for x in range(len(levelTiles)):
+			for y in range(len(levelTiles[x])):
+				tile = levelTiles[x][y]
+				tile.Hscore = (abs(tile.gpos['x']-end.gpos['x']) + abs(tile.gpos['y']-end.gpos['y']))*10
+		while self.openList:
+			self.current = sorted(self.openList, key=attrgetter('Fscore'))[0]
+			
+			self.openList.remove(self.current)
+			self.closedList.append(self.current)
+			if(self.current.gpos['x']==end.gpos['x'] and self.current.gpos['y']==end.gpos['y']):
+				break
+			self.currentNeighbours(self.current, end, levelTiles, levelSize)
+		
+		while(self.current.parent is not None):
+			self.path.append(self.current)
+			self.current = self.current.parent
+		self.current.setState(5)
+	def currentNeighbours(self, current, end, tiles, size):
+		for x in range(-1,2):
+			for y in range(-1,2):
+				if(x or y):
+					gx=current.gpos['x']+x
+					gy=current.gpos['y']+y
+					if(gx<0):gx=0
+					if(gy<0):gy=0
+					if(gx>size['x']-1):gx=size['x']-1
+					if(gy>size['y']-1):gy=size['y']-1
+					tile = tiles[gx][gy]	
+					if(tile.state!=4):
+						if(tile.pos['x']==current.pos['x'] and tile.pos['y']!=current.pos['y']) or (
+								tile.pos['y']==current.pos['y'] and tile.pos['x']!=current.pos['x']):
+							mc = 10
+						else:
+							mc = 14
+						
+						cost = tile.Gscore + mc
+						if(tile in self.openList and cost < current.Gscore):
+							self.openList.remove(tile)
+						if(tile in self.closedList and cost < current.Gscore):
+							self.closedList.remove(tile)
+						if(tile not in self.closedList and tile not in self.openList):
+								tile.parent = current
+								tile.Gscore = cost
+								tile.Fscore = tile.Gscore + tile.Hscore
+								self.openList.append(tile)
+		
+	def getPath(self):
+		return self.path
